@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scan to start the quiz</title>
+<!-- Projector page for the instructor: shows a large QR code that opens the quiz -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  body { margin:0; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
+         font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; background:#fff; color:#1d2433; }
+  h1 { font-size:2.4rem; margin:0 0 6px; color:#0b4fa3; }
+  p  { font-size:1.2rem; margin:4px 0; color:#5b6577; }
+  #qr { margin:24px 0; padding:16px; border:2px solid #d9dee7; border-radius:16px; }
+  code { font-size:1.1rem; background:#f4f6fa; padding:6px 10px; border-radius:6px; }
+</style>
+</head>
+<body>
+  <h1>Machine Learning Quiz</h1>
+  <p>Scan with your phone camera, register, and start.</p>
+  <div id="qr"></div>
+  <p>Or open: <code id="link"></code></p>
+  <script>
+    // The quiz page sits next to this file, so build its address from this page's own address
+    const quizUrl = new URL("index.html", location.href).href;
+    document.getElementById("link").textContent = quizUrl;
+    const size = Math.min(window.innerWidth, window.innerHeight) * 0.6;
+    new QRCode(document.getElementById("qr"), { text: quizUrl, width: size, height: size, correctLevel: QRCode.CorrectLevel.M });
+  </script>
+</body>
+</html>

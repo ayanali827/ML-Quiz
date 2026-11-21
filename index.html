@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>ML Quiz | AIC3503 / AICL3503</title>
+<style>
+  /* ---------- Base layout (mobile first) ---------- */
+  :root { --blue:#0b4fa3; --blue-d:#083a78; --ink:#1d2433; --muted:#5b6577; --line:#d9dee7; --bg:#f4f6fa; --ok:#1d7a46; --bad:#b3261e; --warn:#a35c00; }
+  * { box-sizing:border-box; }
+  html,body { margin:0; padding:0; background:var(--bg); color:var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; font-size:16px; line-height:1.45; }
+  body.locked { -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
+  header { background:var(--blue); color:#fff; padding:14px 18px; }
+  header h1 { margin:0; font-size:1.05rem; font-weight:600; }
+  header p { margin:2px 0 0; font-size:.85rem; opacity:.85; }
+  main { max-width:720px; margin:0 auto; padding:18px 14px 90px; }
+  .card { background:#fff; border:1px solid var(--line); border-radius:10px; padding:18px; margin-bottom:14px; }
+  h2 { font-size:1.15rem; margin:0 0 12px; }
+  label { display:block; font-weight:600; font-size:.9rem; margin:12px 0 4px; }
+  input[type=text] { width:100%; padding:11px 12px; font-size:1rem; border:1px solid var(--line); border-radius:8px; }
+  input[type=text]:focus { outline:2px solid var(--blue); border-color:var(--blue); }
+  .btn { display:inline-block; border:0; border-radius:8px; padding:12px 20px; font-size:1rem; font-weight:600;
+    background:var(--blue); color:#fff; cursor:pointer; }
+  .btn:hover { background:var(--blue-d); }
+  .btn[disabled] { background:#9aa6b8; cursor:not-allowed; }
+  .btn.ghost { background:#fff; color:var(--blue); border:1px solid var(--blue); }
+  .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between; }
+  .err { color:var(--bad); font-size:.9rem; margin-top:10px; min-height:1.2em; }
+  ul.rules { padding-left:20px; margin:8px 0 0; }
+  ul.rules li { margin:6px 0; }
+  .hidden { display:none !important; }
+
+  /* ---------- Quiz screen ---------- */
+  .topbar { position:sticky; top:0; z-index:5; background:#fff; border-bottom:1px solid var(--line);
+    padding:10px 14px; display:flex; justify-content:space-between; align-items:center; font-size:.9rem; }
+  .timer { font-variant-numeric:tabular-nums; font-weight:700; }
+  .timer.low { color:var(--bad); }
+  .progress { height:5px; background:var(--line); }
+  .progress > div { height:100%; background:var(--blue); width:0; transition:width .2s; }
+  .qmeta { font-size:.8rem; color:var(--muted); margin-bottom:6px; }
+  .qtype { display:inline-block; font-size:.75rem; font-weight:700; padding:2px 8px; border-radius:20px;
+    background:#e8effa; color:var(--blue); margin-bottom:8px; }
+  .qtext { font-size:1.05rem; font-weight:600; margin:0 0 14px; }
+  .ctx { background:#f6f8fb; border-left:3px solid var(--blue); padding:8px 10px; font-size:.9rem; margin-bottom:12px; }
+  .opt { display:flex; gap:10px; align-items:flex-start; border:1px solid var(--line); border-radius:8px;
+    padding:12px; margin:8px 0; cursor:pointer; background:#fff; }
+  .opt:hover { border-color:var(--blue); }
+  .opt.sel { border-color:var(--blue); background:#eef4fd; }
+  .opt input { margin-top:3px; transform:scale(1.2); }
+  .opt b { min-width:1.2em; }
+  .watermark { position:fixed; inset:0; pointer-events:none; z-index:1; opacity:.06; font-size:22px; font-weight:700;
+    display:flex; flex-wrap:wrap; align-content:space-around; justify-content:space-around; transform:rotate(-20deg); overflow:hidden; }
+  .watermark span { margin:0 28px; white-space:nowrap; }
+  .bottombar { position:fixed; left:0; right:0; bottom:0; background:#fff; border-top:1px solid var(--line);
+    padding:10px 14px; display:flex; justify-content:space-between; align-items:center; z-index:6; }
+  .warnbox { position:fixed; inset:0; background:rgba(20,24,33,.75); z-index:20; display:flex; align-items:center; justify-content:center; padding:20px; }
+  .warnbox .card { max-width:420px; }
+  .warnbox h2 { color:var(--bad); }
+  .big { font-size:2.2rem; font-weight:800; color:var(--blue); margin:6px 0; }
+  .small { font-size:.85rem; color:var(--muted); }
+</style>
+</head>
+<body>
+<header>
+  <h1 id="hdrTitle">Machine Learning Quiz</h1>
+  <p>AIC3503 Machine Learning / AICL3503 Lab · SZABIST</p>
+</header>
+
+<!-- ============ 1. REGISTRATION ============ -->
+<main id="scrRegister">
+  <div class="card">
+    <h2>Register to start</h2>
+    <label for="inName">Full name</label>
+    <input type="text" id="inName" autocomplete="name" maxlength="60" placeholder="e.g. Ali Raza">
+    <label for="inRoll">Roll No.</label>
+    <input type="text" id="inRoll" autocomplete="off" maxlength="20" placeholder="e.g. 2312345">
+    <label for="inSection">Section</label>
+    <input type="text" id="inSection" autocomplete="off" maxlength="20" placeholder="e.g. BSAI A">
+    <div class="err" id="regErr"></div>
+    <div class="row" style="margin-top:12px"><span></span><button class="btn" id="btnNext">Next</button></div>
+  </div>
+</main>
+
+<!-- ============ 2. RULES ============ -->
+<main id="scrRules" class="hidden">
+  <div class="card">
+    <h2>Before you begin</h2>
+    <p id="rulesWho" class="small"></p>
+    <ul class="rules" id="rulesList"></ul>
+    <div class="err" id="startErr"></div>
+    <div class="row" style="margin-top:14px">
+      <button class="btn ghost" id="btnBack">Back</button>
+      <button class="btn" id="btnStart">Start quiz</button>
+    </div>
+  </div>
+</main>
+
+<!-- ============ 3. QUIZ ============ -->
+<div id="scrQuiz" class="hidden">
+  <div class="topbar">
+    <span id="qCounter">Question 1 of 35</span>
+    <span>Time left: <span class="timer" id="timer">--:--</span></span>
+  </div>
+  <div class="progress"><div id="progBar"></div></div>
+  <div class="watermark" id="watermark"></div>
+  <main style="position:relative;z-index:2">
+    <div class="card" id="qCard"></div>
+  </main>
+  <div class="bottombar">
+    <span class="small" id="viol">Tab switches: 0</span>
+    <button class="btn" id="btnQNext">Next</button>
+  </div>
+</div>
+
+<!-- ============ 4. DONE ============ -->
+<main id="scrDone" class="hidden">
+  <div class="card" style="text-align:center">
+    <h2 id="doneTitle">Submitting…</h2>
+    <div id="doneBody" class="small">Please keep this page open.</div>
+    <div style="margin-top:14px"><button class="btn hidden" id="btnRetry">Retry submission</button></div>
+  </div>
+</main>
+
+<!-- ============ Overlay used for warnings and confirmations ============ -->
+<div class="warnbox hidden" id="overlay">
+  <div class="card">
+    <h2 id="ovTitle"></h2>
+    <p id="ovText"></p>
+    <div class="row">
+      <button class="btn ghost hidden" id="ovCancel">Cancel</button>
+      <button class="btn" id="ovOk">OK</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =====================================================================
+   CONFIGURATION: edit these values
+   ===================================================================== */
+const CONFIG = {
+  // Paste your Google Apps Script Web App URL here (see SETUP_GUIDE.md, step 2).
+  SCRIPT_URL: "https://script.google.com/macros/s/AKfycbxHy77RTXAGhSLyyljAxqIeW04xFlhXnTYRBALGKPhqphz9InQYrfIRIIqkTnUVCRl3DQ/exec",
+  QUIZ_ID: "ML-QUIZ-1",          // change for a new quiz so old attempts don't block it
+  QUIZ_TITLE: "Machine Learning Quiz",
+  DURATION_MIN: 35,              // total time in minutes
+  QUESTIONS_PER_STUDENT: 35,     // fewer than the bank size = each student gets a random subset
+  MAX_VIOLATIONS: 2,             // tab switches allowed; the next one auto-submits
+  SHOW_SCORE: true               // show the score to the student after submitting
+};
+
+/* Question bank (no answers here; grading happens on the server) */
+const QUESTIONS = [{"id": 1, "type": "mc", "text": "A dataset has 8 samples: 6 labelled \"Yes\" and 2 labelled \"No\". What is its entropy? (log base 2)", "section": "Section A: Entropy & Decision Trees", "options": [{"k": "A", "t": "0.250"}, {"k": "B", "t": "0.500"}, {"k": "C", "t": "0.811"}, {"k": "D", "t": "1.000"}]}, {"id": 2, "type": "mc", "text": "A decision tree node contains 10 samples, all of class \"Buy\". What is the entropy of this node?", "section": "Section A: Entropy & Decision Trees", "options": [{"k": "A", "t": "0"}, {"k": "B", "t": "0.5"}, {"k": "C", "t": "1"}, {"k": "D", "t": "Cannot be computed"}]}, {"id": 3, "type": "mc", "text": "A parent node has 8 samples (4 Yes, 4 No), so its entropy is 1.0. An attribute splits it into Left (3 Yes, 1 No) and Right (1 Yes, 3 No). Each child has entropy 0.811. What is the information gain of this split?", "section": "Section A: Entropy & Decision Trees", "options": [{"k": "A", "t": "0.811"}, {"k": "B", "t": "0.189"}, {"k": "C", "t": "0.500"}, {"k": "D", "t": "1.000"}]}, {"id": 4, "type": "mc", "text": "When building a decision tree with the ID3 algorithm, which attribute is chosen to split a node?", "section": "Section A: Entropy & Decision Trees", "options": [{"k": "A", "t": "The attribute with the lowest information gain"}, {"k": "B", "t": "The attribute with the most unique values, regardless of gain"}, {"k": "C", "t": "The attribute with the highest information gain"}, {"k": "D", "t": "The attribute that appears first in the dataset"}]}, {"id": 5, "type": "cb", "text": "Which of the following help reduce overfitting in a decision tree?", "section": "Section A: Entropy & Decision Trees", "options": [{"k": "A", "t": "Limiting the maximum depth of the tree (pre-pruning)"}, {"k": "B", "t": "Growing the tree until every leaf is pure"}, {"k": "C", "t": "Removing branches that do not improve validation accuracy (post-pruning)"}, {"k": "D", "t": "Setting a minimum number of samples required in a leaf"}, {"k": "E", "t": "Training and testing on the same data"}]}, {"id": 6, "type": "mc", "text": "In a telecom customer churn prediction problem, what is the target variable?", "section": "Section B: Customer Churn Prediction", "options": [{"k": "A", "t": "The customer's monthly bill amount"}, {"k": "B", "t": "Whether the customer will leave the company (Yes/No)"}, {"k": "C", "t": "The number of calls the customer makes per day"}, {"k": "D", "t": "The customer's ID number"}]}, {"id": 7, "type": "mc", "text": "In a churn dataset, 95% of customers stay and 5% churn. A model predicts \"Stay\" for every customer and gets 95% accuracy. What is the main problem?", "section": "Section B: Customer Churn Prediction", "options": [{"k": "A", "t": "The model is underfitting because accuracy is too low"}, {"k": "B", "t": "The dataset is imbalanced, so accuracy is misleading and the model never detects churners"}, {"k": "C", "t": "The model should use K-Means instead"}, {"k": "D", "t": "There is no problem; 95% accuracy is excellent"}]}, {"id": 8, "type": "cb", "text": "Which of the following are useful input features for predicting telecom customer churn?", "section": "Section B: Customer Churn Prediction", "options": [{"k": "A", "t": "Contract type (monthly / yearly)"}, {"k": "B", "t": "Customer ID number"}, {"k": "C", "t": "Tenure (how long the customer has been with the company)"}, {"k": "D", "t": "Number of complaints made to customer support"}, {"k": "E", "t": "Monthly charges"}]}, {"id": 9, "type": "mc", "text": "For a telecom company, missing a customer who is about to churn is very costly. Which metric should the churn model mainly maximize?", "section": "Section B: Customer Churn Prediction", "options": [{"k": "A", "t": "Recall"}, {"k": "B", "t": "Accuracy"}, {"k": "C", "t": "Specificity"}, {"k": "D", "t": "Training speed"}]}, {"id": 10, "type": "mc", "text": "Which pair of steps does K-Means repeat until the clusters stop changing?", "section": "Section C: K-Means Clustering", "options": [{"k": "A", "t": "Split nodes by information gain, then prune the tree"}, {"k": "B", "t": "Assign each point to its nearest centroid, then recompute each centroid as the mean of its points"}, {"k": "C", "t": "Find the k nearest neighbours, then take a majority vote"}, {"k": "D", "t": "Compute prior probabilities, then multiply by likelihoods"}]}, {"id": 11, "type": "mc", "text": "A cluster contains the points (2, 4), (4, 6) and (6, 8). What is its new centroid after the update step?", "section": "Section C: K-Means Clustering", "options": [{"k": "A", "t": "(4, 6)"}, {"k": "B", "t": "(6, 8)"}, {"k": "C", "t": "(12, 18)"}, {"k": "D", "t": "(3, 5)"}]}, {"id": 12, "type": "mc", "text": "The current centroids are C1 = (1, 1) and C2 = (6, 6). Using Euclidean distance, which cluster is the point P = (2, 3) assigned to?", "section": "Section C: K-Means Clustering", "options": [{"k": "A", "t": "C2, because its distance is 5.00"}, {"k": "B", "t": "Neither; the point is an outlier"}, {"k": "C", "t": "Both, because the distances are equal"}, {"k": "D", "t": "C1, because its distance is about 2.24"}]}, {"id": 13, "type": "mc", "text": "Which method is commonly used to choose the number of clusters k in K-Means?", "section": "Section C: K-Means Clustering", "options": [{"k": "A", "t": "ROC curve"}, {"k": "B", "t": "Information gain"}, {"k": "C", "t": "Elbow method (plot of within-cluster sum of squares against k)"}, {"k": "D", "t": "Confusion matrix"}]}, {"id": 14, "type": "cb", "text": "Which of the following are limitations of K-Means?", "section": "Section C: K-Means Clustering", "options": [{"k": "A", "t": "The number of clusters k must be chosen in advance"}, {"k": "B", "t": "It needs labelled training data"}, {"k": "C", "t": "Results depend on the initial placement of centroids"}, {"k": "D", "t": "It is sensitive to outliers"}, {"k": "E", "t": "It always finds the globally optimal clustering"}]}, {"id": 15, "type": "mc", "text": "What is the accuracy of the classifier?", "section": "Section D: Confusion Matrix & ROC Curve", "options": [{"k": "A", "t": "0.40"}, {"k": "B", "t": "0.60"}, {"k": "C", "t": "0.80"}, {"k": "D", "t": "0.70"}], "context": "Confusion matrix (100 samples): Actual Positive → TP = 40, FN = 20; Actual Negative → FP = 10, TN = 30."}, {"id": 16, "type": "mc", "text": "What is the precision of the classifier?", "section": "Section D: Confusion Matrix & ROC Curve", "options": [{"k": "A", "t": "0.80"}, {"k": "B", "t": "0.67"}, {"k": "C", "t": "0.75"}, {"k": "D", "t": "0.40"}], "context": "Confusion matrix (100 samples): Actual Positive → TP = 40, FN = 20; Actual Negative → FP = 10, TN = 30."}, {"id": 17, "type": "mc", "text": "What is the recall (sensitivity / true positive rate) of the classifier?", "section": "Section D: Confusion Matrix & ROC Curve", "options": [{"k": "A", "t": "0.80"}, {"k": "B", "t": "0.50"}, {"k": "C", "t": "0.67"}, {"k": "D", "t": "0.25"}], "context": "Confusion matrix (100 samples): Actual Positive → TP = 40, FN = 20; Actual Negative → FP = 10, TN = 30."}, {"id": 18, "type": "mc", "text": "What is the false positive rate (FPR) of the classifier?", "section": "Section D: Confusion Matrix & ROC Curve", "options": [{"k": "A", "t": "0.10"}, {"k": "B", "t": "0.25"}, {"k": "C", "t": "0.33"}, {"k": "D", "t": "0.20"}], "context": "Confusion matrix (100 samples): Actual Positive → TP = 40, FN = 20; Actual Negative → FP = 10, TN = 30."}, {"id": 19, "type": "mc", "text": "What does an ROC curve plot?", "section": "Section D: Confusion Matrix & ROC Curve", "options": [{"k": "A", "t": "Precision (y-axis) against recall (x-axis)"}, {"k": "B", "t": "Accuracy (y-axis) against number of epochs (x-axis)"}, {"k": "C", "t": "True positive rate (y-axis) against false positive rate (x-axis)"}, {"k": "D", "t": "Training loss (y-axis) against validation loss (x-axis)"}]}, {"id": 20, "type": "mc", "text": "A model has an AUC (area under the ROC curve) of 0.5. What does this mean?", "section": "Section D: Confusion Matrix & ROC Curve", "options": [{"k": "A", "t": "The model is perfect"}, {"k": "B", "t": "The model performs no better than random guessing"}, {"k": "C", "t": "The model is correct 50% of the time on positives only"}, {"k": "D", "t": "The model always predicts the negative class"}]}, {"id": 21, "type": "cb", "text": "Which statements about ROC curves are correct?", "section": "Section D: Confusion Matrix & ROC Curve", "options": [{"k": "A", "t": "The ROC curve is drawn by varying the classification threshold"}, {"k": "B", "t": "A curve closer to the top-left corner indicates a better classifier"}, {"k": "C", "t": "An AUC of 1.0 means perfect separation of the two classes"}, {"k": "D", "t": "The x-axis of an ROC curve is precision"}, {"k": "E", "t": "A higher threshold always increases the true positive rate"}]}, {"id": 22, "type": "mc", "text": "In a spam filter, which error is usually considered worse for the user?", "section": "Section E: Spam Email Classification", "options": [{"k": "A", "t": "A spam email reaching the inbox (false negative)"}, {"k": "B", "t": "Both errors are always equally bad"}, {"k": "C", "t": "An important legitimate email being sent to the spam folder (false positive)"}, {"k": "D", "t": "Neither, because spam filters cannot make errors"}]}, {"id": 23, "type": "mc", "text": "Why is the Naive Bayes spam classifier called \"naive\"?", "section": "Section E: Spam Email Classification", "options": [{"k": "A", "t": "It assumes the words (features) are conditionally independent of each other, given the class"}, {"k": "B", "t": "It does not use any probabilities"}, {"k": "C", "t": "It can only classify short emails"}, {"k": "D", "t": "It ignores the prior probability of spam"}]}, {"id": 24, "type": "mc", "text": "Suppose P(Spam) = 0.4 and P(Ham) = 0.6. The word \"free\" appears in 50% of spam emails and 10% of ham emails. An email contains \"free\". Using Bayes' theorem, what is P(Spam | \"free\")?", "section": "Section E: Spam Email Classification", "options": [{"k": "A", "t": "0.20"}, {"k": "B", "t": "0.50"}, {"k": "C", "t": "0.40"}, {"k": "D", "t": "0.77"}]}, {"id": 25, "type": "cb", "text": "Which are standard steps to prepare email text before training a spam classifier?", "section": "Section E: Spam Email Classification", "options": [{"k": "A", "t": "Converting text to lowercase"}, {"k": "B", "t": "Tokenizing the email into words"}, {"k": "C", "t": "Removing stop words such as \"the\" and \"is\""}, {"k": "D", "t": "Converting the words into numbers with Bag-of-Words or TF-IDF"}, {"k": "E", "t": "Drawing the ROC curve before any training"}]}, {"id": 26, "type": "mc", "text": "Why is KNN called a \"lazy learner\"?", "section": "Section F: K-Nearest Neighbors (KNN)", "options": [{"k": "A", "t": "It trains slowly on large datasets"}, {"k": "B", "t": "It builds no model during training; it stores the data and does the work at prediction time"}, {"k": "C", "t": "It uses only one feature"}, {"k": "D", "t": "It always predicts the majority class"}]}, {"id": 27, "type": "mc", "text": "A new email must be classified with KNN. Its five nearest training emails, sorted by distance, are: A (1.0, Spam), B (1.5, Ham), C (2.0, Spam), D (2.5, Ham), E (3.0, Ham). With k = 3 and majority voting, what is the prediction?", "section": "Section F: K-Nearest Neighbors (KNN)", "options": [{"k": "A", "t": "Ham, because 3 of the 5 neighbours are Ham"}, {"k": "B", "t": "Cannot be decided; it is a tie"}, {"k": "C", "t": "Spam, because 2 of the 3 nearest neighbours are Spam"}, {"k": "D", "t": "Ham, because the nearest Ham email is closer than the farthest Spam email"}]}, {"id": 28, "type": "cb", "text": "Which statements about KNN are correct?", "section": "Section F: K-Nearest Neighbors (KNN)", "options": [{"k": "A", "t": "Feature scaling (normalization) is important, because features with large ranges dominate the distance"}, {"k": "B", "t": "A very small k (e.g. k = 1) makes the model sensitive to noise"}, {"k": "C", "t": "A very large k makes the decision boundary too smooth and can cause underfitting"}, {"k": "D", "t": "An odd k is often used in binary classification to avoid ties"}, {"k": "E", "t": "k must always equal the number of features"}]}, {"id": 29, "type": "mc", "text": "A model scores 99% accuracy on training data but only 70% on test data. What is happening?", "section": "Section G: Other Course Topics", "options": [{"k": "A", "t": "Underfitting"}, {"k": "B", "t": "Overfitting"}, {"k": "C", "t": "The model is well balanced"}, {"k": "D", "t": "The test data is too large"}]}, {"id": 30, "type": "cb", "text": "Which techniques can reduce overfitting?", "section": "Section G: Other Course Topics", "options": [{"k": "A", "t": "Collecting more training data"}, {"k": "B", "t": "Regularization (L1 / L2)"}, {"k": "C", "t": "Dropout in neural networks"}, {"k": "D", "t": "Using k-fold cross-validation to tune the model"}, {"k": "E", "t": "Training for many more epochs without checking validation loss"}]}, {"id": 31, "type": "mc", "text": "What does a Support Vector Machine (SVM) try to find?", "section": "Section G: Other Course Topics", "options": [{"k": "A", "t": "The hyperplane with the maximum margin between the classes"}, {"k": "B", "t": "The k nearest training points"}, {"k": "C", "t": "The cluster centroids"}, {"k": "D", "t": "The attribute with the highest entropy"}]}, {"id": 32, "type": "cb", "text": "Which statements about ensemble learning are correct?", "section": "Section G: Other Course Topics", "options": [{"k": "A", "t": "Random Forest combines many decision trees trained with bagging"}, {"k": "B", "t": "Boosting trains models one after another, each focusing on the previous model's errors"}, {"k": "C", "t": "An ensemble always uses only one base model"}, {"k": "D", "t": "Combining several models can reduce variance and improve accuracy"}, {"k": "E", "t": "In boosting, all models are trained independently in parallel"}]}, {"id": 33, "type": "cb", "text": "Which statements about Bayesian networks are correct?", "section": "Section G: Other Course Topics", "options": [{"k": "A", "t": "A Bayesian network is a directed acyclic graph (DAG)"}, {"k": "B", "t": "Each node represents a random variable"}, {"k": "C", "t": "Edges can form cycles"}, {"k": "D", "t": "Each node has a conditional probability table given its parents"}, {"k": "E", "t": "All variables are assumed fully independent of each other"}]}, {"id": 34, "type": "mc", "text": "A tourist review says: \"The hotel room was clean, but the staff were rude.\" What does aspect-based sentiment analysis produce for this review?", "section": "Section G: Other Course Topics", "options": [{"k": "A", "t": "One overall label: Neutral"}, {"k": "B", "t": "One overall label: Positive"}, {"k": "C", "t": "Positive for \"room\" and Negative for \"staff\""}, {"k": "D", "t": "A cluster number for the review"}]}, {"id": 35, "type": "cb", "text": "Which of the following are core elements of Reinforcement Learning?", "section": "Section G: Other Course Topics", "options": [{"k": "A", "t": "Agent"}, {"k": "B", "t": "Environment"}, {"k": "C", "t": "Reward"}, {"k": "D", "t": "A labelled dataset giving the correct action for every state"}, {"k": "E", "t": "Action"}]}];
+
+/* =====================================================================
+   Helpers
+   ===================================================================== */
+const $ = id => document.getElementById(id);
+const STORE_KEY = "quizState_" + CONFIG.QUIZ_ID;
+const DONE_KEY  = "quizDone_"  + CONFIG.QUIZ_ID;
+
+function show(id) {
+  ["scrRegister","scrRules","scrQuiz","scrDone"].forEach(s => $(s).classList.toggle("hidden", s !== id));
+}
+function shuffle(arr) {               // Fisher–Yates, using crypto randomness
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const r = new Uint32Array(1); crypto.getRandomValues(r);
+    const j = r[0] % (i + 1); [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function esc(s) { const d = document.createElement("div"); d.textContent = s; return d.innerHTML; }
+function save() { try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) {} }
+function load() { try { return JSON.parse(localStorage.getItem(STORE_KEY)); } catch (e) { return null; } }
+
+// Simple modal; returns a Promise<boolean>
+function modal(title, text, withCancel) {
+  return new Promise(res => {
+    $("ovTitle").textContent = title; $("ovText").textContent = text;
+    $("ovCancel").classList.toggle("hidden", !withCancel);
+    $("overlay").classList.remove("hidden");
+    $("ovOk").onclick = () => { $("overlay").classList.add("hidden"); res(true); };
+    $("ovCancel").onclick = () => { $("overlay").classList.add("hidden"); res(false); };
+  });
+}
+
+// POST to Apps Script. text/plain avoids a CORS preflight.
+async function api(payload) {
+  const r = await fetch(CONFIG.SCRIPT_URL, {
+    method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify(payload)
+  });
+  return r.json();
+}
+
+/* =====================================================================
+   State
+   ===================================================================== */
+let state = null;       // {name, roll, section, order:[{id, opts:[keys]}], idx, answers:{id:[keys]}, start, violations, submitted}
+let timerHandle = null;
+let lastViolationAt = 0;
+let sending = false;
+
+/* =====================================================================
+   1. Registration
+   ===================================================================== */
+$("hdrTitle").textContent = CONFIG.QUIZ_TITLE;
+
+$("btnNext").onclick = () => {
+  const name = $("inName").value.trim().replace(/\s+/g, " ");
+  const roll = $("inRoll").value.trim().toUpperCase().replace(/\s+/g, "");
+  const section = $("inSection").value.trim().toUpperCase();
+  if (name.length < 3)   return $("regErr").textContent = "Please enter your full name.";
+  if (roll.length < 3)   return $("regErr").textContent = "Please enter your roll number.";
+  if (section.length < 1) return $("regErr").textContent = "Please enter your section.";
+  $("regErr").textContent = "";
+  state = { name, roll, section };
+  $("rulesWho").textContent = name + " · " + roll + " · " + section;
+  show("scrRules");
+};
+$("btnBack").onclick = () => show("scrRegister");
+
+$("rulesList").innerHTML = [
+  "You have <b>" + CONFIG.DURATION_MIN + " minutes</b>. The quiz submits itself when time runs out.",
+  "Questions come <b>one at a time</b> and you <b>cannot go back</b>.",
+  "<b>(Single answer)</b> = choose one option. <b>(Select all that apply)</b> = tick every correct option; you only get the mark if all are right.",
+  "<b>Do not leave this page</b> (other tabs, apps or notifications). Every switch is recorded. After " + CONFIG.MAX_VIOLATIONS + " warnings the quiz is <b>submitted automatically</b>.",
+  "You get <b>one attempt</b> only. Refreshing the page is recorded as a switch."
+].map(t => "<li>" + t + "</li>").join("");
+
+/* =====================================================================
+   2. Start
+   ===================================================================== */
+$("btnStart").onclick = async () => {
+  if (CONFIG.SCRIPT_URL.indexOf("http") !== 0) {
+    $("startErr").textContent = "Quiz is not set up yet (SCRIPT_URL missing). Tell your instructor.";
+    return;
+  }
+  if (localStorage.getItem(DONE_KEY)) {
+    $("startErr").textContent = "This device has already submitted this quiz.";
+    return;
+  }
+  $("btnStart").disabled = true; $("startErr").textContent = "Checking…";
+  try {
+    const res = await api({ action: "start", quizId: CONFIG.QUIZ_ID, name: state.name, roll: state.roll, section: state.section });
+    if (!res.ok) { $("startErr").textContent = res.message || "You cannot start this quiz."; $("btnStart").disabled = false; return; }
+  } catch (e) {
+    $("startErr").textContent = "No connection to the quiz server. Check your internet and try again.";
+    $("btnStart").disabled = false; return;
+  }
+  $("startErr").textContent = "";
+
+  // Build this student's random paper: random question order and option order
+  const picked = shuffle(QUESTIONS).slice(0, Math.min(CONFIG.QUESTIONS_PER_STUDENT, QUESTIONS.length));
+  state.order = picked.map(q => ({ id: q.id, opts: shuffle(q.options.map(o => o.k)) }));
+  state.idx = 0; state.answers = {}; state.start = Date.now(); state.violations = 0; state.submitted = false;
+  save();
+  beginQuiz();
+};
+
+function beginQuiz() {
+  document.body.classList.add("locked");
+  try { document.documentElement.requestFullscreen && document.documentElement.requestFullscreen(); } catch (e) {}
+  $("watermark").innerHTML = Array(40).fill(esc(state.roll + " · " + state.name)).map(t => "<span>" + t + "</span>").join("");
+  show("scrQuiz");
+  renderQuestion();
+  tick(); timerHandle = setInterval(tick, 1000);
+}
+
+/* =====================================================================
+   3. Quiz
+   ===================================================================== */
+const byId = Object.fromEntries(QUESTIONS.map(q => [q.id, q]));
+const LETTERS = "ABCDE";
+
+function renderQuestion() {
+  const item = state.order[state.idx];
+  const q = byId[item.id];
+  const multi = q.type === "cb";
+  const chosen = state.answers[q.id] || [];
+  $("qCounter").textContent = "Question " + (state.idx + 1) + " of " + state.order.length;
+  $("progBar").style.width = (100 * state.idx / state.order.length) + "%";
+  $("viol").textContent = "Tab switches: " + state.violations + " / " + CONFIG.MAX_VIOLATIONS;
+  $("btnQNext").textContent = state.idx === state.order.length - 1 ? "Submit" : "Next";
+
+  let html = '<div class="qmeta">' + esc(q.section || "") + '</div>';
+  html += '<span class="qtype">' + (multi ? "Select all that apply" : "Single answer") + '</span>';
+  if (q.context) html += '<div class="ctx">' + esc(q.context) + '</div>';
+  html += '<p class="qtext">' + esc(q.text) + '</p>';
+  item.opts.forEach((k, i) => {
+    const o = q.options.find(x => x.k === k);
+    const on = chosen.includes(k);
+    html += '<label class="opt' + (on ? " sel" : "") + '"><input type="' + (multi ? "checkbox" : "radio") +
+            '" name="opt" value="' + k + '"' + (on ? " checked" : "") + '><b>' + LETTERS[i] + '.</b><span>' + esc(o.t) + '</span></label>';
+  });
+  $("qCard").innerHTML = html;
+  $("qCard").querySelectorAll("input").forEach(inp => inp.onchange = () => {
+    const sel = [...$("qCard").querySelectorAll("input:checked")].map(x => x.value);
+    state.answers[q.id] = sel;
+    $("qCard").querySelectorAll(".opt").forEach(l => l.classList.toggle("sel", l.querySelector("input").checked));
+    save();
+  });
+  window.scrollTo(0, 0);
+}
+
+$("btnQNext").onclick = async () => {
+  const q = byId[state.order[state.idx].id];
+  const ans = state.answers[q.id] || [];
+  if (ans.length === 0) {
+    const go = await modal("No answer selected", "You have not answered this question. You cannot come back to it. Continue anyway?", true);
+    if (!go) return;
+  }
+  if (state.idx === state.order.length - 1) {
+    const ok = await modal("Submit quiz?", "This is the last question. Submit your answers now?", true);
+    if (ok) submit(false, "completed");
+    return;
+  }
+  state.idx++; save(); renderQuestion();
+};
+
+function tick() {
+  const left = Math.max(0, CONFIG.DURATION_MIN * 60000 - (Date.now() - state.start));
+  const m = Math.floor(left / 60000), s = Math.floor(left % 60000 / 1000);
+  $("timer").textContent = String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+  $("timer").classList.toggle("low", left < 60000);
+  if (left === 0 && !state.submitted) submit(true, "time up");
+}
+
+/* ---------- Anti-cheat: leaving the page ---------- */
+let unloading = false;                  // a reload is counted once, on resume, not here as well
+window.addEventListener("beforeunload", () => { unloading = true; });
+function violation(reason) {
+  if (unloading || !state || !state.order || state.submitted) return;
+  const now = Date.now();
+  if (now - lastViolationAt < 1500) return;      // blur + visibilitychange fire together; count once
+  lastViolationAt = now;
+  state.violations++; save();
+  $("viol").textContent = "Tab switches: " + state.violations + " / " + CONFIG.MAX_VIOLATIONS;
+  if (state.violations > CONFIG.MAX_VIOLATIONS) {
+    submit(true, "too many tab switches");
+  } else {
+    modal("Warning " + state.violations + " of " + CONFIG.MAX_VIOLATIONS,
+      "You left the quiz page (" + reason + "). This has been recorded. " +
+      (CONFIG.MAX_VIOLATIONS - state.violations === 0
+        ? "This was your last warning: if you leave again, your quiz is submitted automatically."
+        : "Warnings left: " + (CONFIG.MAX_VIOLATIONS - state.violations) + ". After that, leaving again submits your quiz automatically."), false);
+  }
+}
+document.addEventListener("visibilitychange", () => { if (document.hidden) violation("switched tab or app"); });
+window.addEventListener("blur", () => violation("left the window"));
+["copy","cut","paste","contextmenu"].forEach(ev => document.addEventListener(ev, e => {
+  if (state && state.order && !state.submitted) e.preventDefault();
+}));
+document.addEventListener("keydown", e => {   // block common shortcuts (print, save, view source, devtools)
+  if (!state || !state.order || state.submitted) return;
+  const k = e.key.toLowerCase();
+  if ((e.ctrlKey || e.metaKey) && ["p","s","u","c","a"].includes(k)) e.preventDefault();
+  if (k === "f12") e.preventDefault();
+});
+
+/* =====================================================================
+   4. Submit
+   ===================================================================== */
+async function submit(auto, reason) {
+  if ((state.submitted && state.sentOk) || sending) return;   // never send twice at once
+  sending = true;
+  state.submitted = true; state.autoSubmitted = auto; state.reason = reason;
+  state.submittedAt = state.submittedAt || Date.now(); save();
+  clearInterval(timerHandle);
+  document.body.classList.remove("locked");
+  try { document.fullscreenElement && document.exitFullscreen(); } catch (e) {}
+  $("overlay").classList.add("hidden");
+  show("scrDone");
+  $("doneTitle").textContent = "Submitting…";
+  $("doneBody").textContent = auto ? "Your quiz was submitted automatically (" + reason + ")." : "Please keep this page open.";
+  $("btnRetry").classList.add("hidden");
+  try {
+    const res = await api({
+      action: "submit", quizId: CONFIG.QUIZ_ID,
+      name: state.name, roll: state.roll, section: state.section,
+      answers: state.answers, questionIds: state.order.map(o => o.id),
+      violations: state.violations, autoSubmitted: auto, reason: reason,
+      startedAt: new Date(state.start).toISOString(), submittedAt: new Date(state.submittedAt).toISOString(),
+      device: navigator.userAgent.slice(0, 150)
+    });
+    if (!res.ok) throw new Error(res.message || "Server error");
+    state.sentOk = true; save();
+    localStorage.setItem(DONE_KEY, state.roll);
+    $("doneTitle").textContent = "Submitted ✓";
+    let msg = "Thank you, " + state.name + ". Your answers have been recorded.";
+    if (auto) msg = "Submitted automatically (" + reason + "). " + msg;
+    $("doneBody").innerHTML = esc(msg) +
+      (CONFIG.SHOW_SCORE && res.score !== undefined ? '<div class="big">' + res.score + " / " + res.total + "</div>" : "") +
+      '<div class="small">You can close this page now.</div>';
+  } catch (e) {
+    $("doneTitle").textContent = "Not submitted yet";
+    $("doneBody").textContent = "Could not reach the server. Your answers are saved on this device. Check your internet, then press Retry.";
+    $("btnRetry").classList.remove("hidden");
+  }
+  sending = false;
+}
+$("btnRetry").onclick = () => submit(state.autoSubmitted, state.reason);
+
+/* =====================================================================
+   Resume after an accidental refresh (counted as a switch)
+   ===================================================================== */
+(function resume() {
+  const saved = load();
+  if (!saved || !saved.order) return;
+  state = saved;
+  if (state.submitted) {               // finished before: show result screen / retry if it never reached the server
+    show("scrDone");
+    if (state.sentOk) { $("doneTitle").textContent = "Already submitted ✓"; $("doneBody").textContent = "You have already submitted this quiz."; }
+    else submit(state.autoSubmitted, state.reason);
+    return;
+  }
+  state.violations++; save();          // a refresh during the quiz counts as a switch
+  if (state.violations > CONFIG.MAX_VIOLATIONS) { submit(true, "too many tab switches"); return; }
+  beginQuiz();
+  modal("Quiz resumed", "The page was reloaded. This has been recorded as a tab switch (" + state.violations + " of " + CONFIG.MAX_VIOLATIONS + ").", false);
+})();
+</script>
+</body>
+</html>
